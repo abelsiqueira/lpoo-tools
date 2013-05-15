@@ -1,0 +1,301 @@
+\documentclass[A4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[left=2cm,right=2cm,top=3cm,bottom=3cm]{geometry}
+\usepackage[brazil]{babel}
+\usepackage{indentfirst}
+\usepackage{url}
+\usepackage{listings}
+
+\title{LPOO - Manutenção de Máquinas para Teste}
+\author{Raniere Silva \\ \url{ra092767@ime.unicamp.br} \and
+        Abel Siqueira \\ \url{abel.s.siqueira@gmail.com}}
+\begin{document}
+\maketitle
+
+\input{test-environment.tex}
+\section{Pré-Requisitos}
+Para configurar uma máquina será preciso:
+\begin{itemize}
+  \item conexão com a internet,
+  \item um pen-drive vazio.
+\end{itemize}
+
+\section{Pré-Instalação}
+Baixe a imagem do Arch Linux em \url{https://www.archlinux.org/download/}.
+Depois de baixar a imagem, copie-a para o pen-drive utilizando
+\begin{lstlisting}
+# dd if=caminho/para/image/Arch/Linux of=/dev/sdX
+\end{lstlisting}
+onde \lstinline+sdX+ é o disco correspondente ao pen-drive. Caso você não saiba
+qual é o disco correspondente ao pen-drive, utilize
+\begin{lstlisting}
+# fdisk -l
+\end{lstlisting}
+para descobrir.
+
+Com o pen-drive contendo a imagem do Arch Linux, conecte o pen-drive na máquina
+a ser configurada, e ligue-a. Logo que a máquina começar a funcionar você deve
+apertar alguma tecla para entrar na BIOS (provavelmente \lstinline+F1+,
+\lstinline+F2+ \lstinline+F11+, \lstinline+F12+ ou \lstinline+Del+).
+
+Na BIOS você precisa habilitar o boot pela porta USB (e o dispositivo de rede).
+Opcionalmente pode-se configurar a ordem de boot dos dispositivos.
+
+Uma vez configurada a BIOS adequadamente, salve as configurações e saia. A
+máquina irá reiniciar e logo que voltar a funcionar você deve apertar alguma
+tecla para selecionar o dispositivo a partir do qual será feito o boot
+(provavelmente \lstinline+F10+).
+
+Irá aparecer uma tela mostrando algumas opções. Antes de instalar, é recomendado
+verificar a integridade do disco de instalação.
+
+\section{Instalação}
+A instalação do Arch Linux ocorre toda pelo terminal e iremos mostrar quais
+comandos você deve utilizar.
+
+\subsection{Configurando teclado}
+Se estiver utilizando um teclado ABNT2 você terá que informá-lo:
+\begin{lstlisting}
+# loadkeys br-abnt2
+\end{lstlisting}
+Também é recomendado modificar a fonte:
+\begin{lstlisting}
+# setfont Lat2-Terminus16
+\end{lstlisting}
+
+\subsection{Conectando com a Internet}
+Verifique se possue conexão de internet:
+\begin{lstlisting}
+# ping -c 10 8.8.8.8
+\end{lstlisting}
+
+\subsection{Particionamento do disco}
+Precisamos particionar o disco, considerando um disco de 500GB utilizaremos a
+seguinte configuração:
+\begin{itemize}
+  \item 50GB para o \lstinline+root+,
+  \item 1GB para o \lstinline+boot+,
+  \item 16GB para a \lstinline+swap+,
+  \item ~400GB para o \lstinline+home+ (é utilizado o resto do disco).
+\end{itemize}
+
+Muito provavelmente o disco a ser utilizado é \lstinline+/dev/sda+, se não tiver
+certeza ou quiser verificar utilize:
+\begin{lstlisting}
+# fdisk -l
+\end{lstlisting}
+
+Para realizar o particionamento iremos utilizar o \lstinline+gdisk+ (se quiser
+algo mais visual utilize o \lstinline+cgdisk+).
+\begin{lstlisting}
+# gdisk /dev/sda
+: o
+: n
+:
+:
+: +50G
+:
+: c
+: root
+: n
+:
+:
+: +1G
+:
+: c
+: 2
+: boot
+: n
+:
+:
+: +16G
+: 8200
+: c
+: 3
+: swap
+: n
+:
+:
+:
+:
+: c
+: 4
+: home
+: w
+\end{lstlisting}
+Se precisar de ajuda digite \lstinline+?+ na prompt do \lstinline+gdisk+.
+
+\subsection{Formatação das partições}
+Depois de criado as partições, é preciso formatá-las.
+\begin{lstlisting}
+# mkfs -t ext4 /dev/sda1
+# mkfs -t ext4 /dev/sda2
+# mkfs -t ext4 /dev/sda4
+\end{lstlisting}
+
+Para a swap,
+\begin{lstlisting}
+# mkswap /dev/sda3
+# swapon /dev/sda3
+\end{lstlisting}
+
+\subsection{Montagem das partições}
+É necessário montar as partições.
+\begin{lstlisting}
+# mount /dev/sda1 /mnt
+# mkdir /mnt/boot
+# mount /dev/sda2 /mnt/boot
+# mkdir /mnt/home
+# mount /dev/sda4 /mnt/home
+\end{lstlisting}
+
+\subsection{Instalando o Arch Linux}
+Antes de instalar edite o arquivo \lstinline+/etc/pacman.d/mirrorlist+ (você
+terá que fazer isso utilizando o \lstinline+vi+ ou o \lstinline+nano+) para
+tentar utilizar um servidor mais próximo (mova para o início do arquivo os
+servidores que encontram-se no Brasil). As primeiras linhas devem ser parecidas
+com
+\begin{lstlisting}
+Server = ftp://ftp.las.ic.unicamp.br/pub/archlinux/$repo/os/$arch
+Server = http://www.las.ic.unicamp.br/pub/archlinux/$repo/os/$arch
+Server = http://pet.inf.ufsc.br/mirrors/archlinux/$repo/os/$arch
+Server = ftp://archlinux.c3sl.ufpr.br/archlinux/$repo/os/$arch
+Server = http://archlinux.c3sl.ufpr.br/$repo/os/$arch
+\end{lstlisting}
+
+Para instalar, utilize
+\begin{lstlisting}
+# pacstrap /mnt base base-devel
+\end{lstlisting}
+
+\subsection{Configurando o sistema}
+É preciso gerar o arquigo \lstinline+fstab+:
+\begin{lstlisting}
+# genfstab -p -U /mnt >> /mnt/etc/fstab
+\end{lstlisting}
+
+Entre no novo sistema
+\begin{lstlisting}
+# arch-chroot /mnt
+\end{lstlisting}
+e configure novamente o teclado. Para salvar a configuração do teclado, adicione
+as linhas abaixo ao arquivo \lstinline+/etc/vconsole.conf+:
+\begin{lstlisting}
+KEYMAP=br-abnt2
+FONT=Lat2-Terminus16
+\end{lstlisting}
+Também configure novamente a conexão de internet.
+
+Configure o hostname:
+\begin{lstlisting}
+# echo lpoo-XXXXX > /etc/hostname
+\end{lstlisting}
+onde \lstinline+XXXXX+ é o PI da máquina.
+
+Crie um link simbólico para o fuso horário de Brasília.
+\begin{lstlisting}
+# ls -s /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
+\end{lstlisting}
+
+Edite o arquivo \lstinline+/etc/locale.gen+ removendo o \lstinline+#+ das linhas
+\begin{lstlisting}
+#en_US UTF-8 UTF-8
+#pt_BR UTF-8 UTF-8
+\end{lstlisting}
+Depois de editar as linhas, execute
+\begin{lstlisting}
+# locale-gen
+# echo LANG=en_US.UTF-8 > /etc/locale.conf
+# export LANG=en_US.UTF-8
+\end{lstlisting}
+
+Configure uma senha para o usuário \lstinline+root+:
+\begin{lstlisting}
+# passwd root
+\end{lstlisting}
+
+\subsection{Instalando o bootloader}
+Utilizaremos o Syslinux, para instalá-lo:
+\begin{lstlisting}
+# pacman -S syslinux
+\end{lstlisting}
+
+Execute
+\begin{lstlisting}
+# pacman -S gptfdisk
+# syslinux-install_update -i -a -m
+\end{lstlisting}
+
+Edite o arquivo
+\lstinline+/boot/syslinux/syslinux.cfg+ de forma a ter as seguintes linhas:
+\begin{lstlisting}
+LABEL arch
+        LINUX ../vmlinuz-linux
+        APPEND root=UUID=978e3e81-8048-4ae1-8a06-aa727458e8ff ro
+        INITRD ../initramfs-linux.img
+\end{lstlisting}
+
+Por último,
+\begin{lstlisting}
+# exit
+\end{lstlisting}
+
+\subsection{Reinicialização}
+Antes de reinicializar, é preciso desmontar as partições:
+\begin{lstlisting}
+# umount /mnt/{boot,home,}
+\end{lstlisting}
+
+Para terminar, reinicialize a máquina:
+\begin{lstlisting}
+# reboot
+\end{lstlisting}
+
+\section{Pós-Instalação}
+
+\section{Solução de problemas}
+A seguir a solução para alguns problemas que já tivemos.
+
+\begin{enumerate}
+  \item \textbf{Máquina não consegue bootar.}
+
+    Isso pode decorrer de alguma configuração inadequada de uma instalação
+    anterior ou da BIOS. Será preciso verificar ambos os casos.
+
+  \item \textbf{Alguma configuração na BIOS impede o boot.}
+
+    Recomenda-se que restaure a configuração inicial da BIOS que pode ser feito
+    de várias maneiras:
+    \begin{itemize}
+      \item Própria opção no painel de configuração da BIOS.
+      \item Utilizando jumper de restauração da BIOS (será preciso abrir a
+        máquina).
+      \item Removendo a bateria da placa-mãe (será preciso abrir a máquina e
+        talvez tenha que utilizar o jumper de restauração da BIOS).
+    \end{itemize}
+    Para os dois últimos ítens recomenda-se dar uma olhada no manual da
+    placa-mãe da máquina.
+
+  \item \textbf{Não consigo acesso a internet.}
+
+    Verifique se a configuração de conexão de internet está correta. As máquinas
+    de teste não utilizam DHCP.
+
+  \item \textbf{O dispositivo de rede não é listado pelo sistema operaciona.}
+
+    Talvez o dispositivo de rede esteja desabilitado na configuração de rede,
+    verifique se este é o caso.
+
+    O dispositivo de rede pode ter queimado.
+\end{enumerate}
+
+\section*{Referências}
+A seguir encontram-se uma lista de páginas utilizadas como referência para este
+documento.
+\begin{itemize}
+  \item Arch Linux Wiki - Beginners' Guide
+    [\url{https://wiki.archlinux.org/index.php/Beginners%27_Guide}],
+  \item Arch Linux Wiki - Installation Guide
+    [\url{https://wiki.archlinux.org/index.php/Installation_Guide}].
+\end{itemize}
+\end{document}

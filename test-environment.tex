@@ -1,0 +1,25 @@
+% Este arquivo descreve o ambiente de teste do LPOO.
+%
+% Ele é reutilizado nos arquivos `test-pc.tex` e `test-run.tex`.
+\section{Ambiente}
+O LPOO possui disponíveis para a realização de testes computacionais as máquinas
+presentes na tabela abaixo.
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|c|c|c|c|}
+    \hline
+    Hostname & Processador & Memória RAM & Placa de Vídeo \\ \hline
+    lpoo-13631 & Intel(R) Core(TM) i7 920 & 8GB & GeForce 9800 GT \\ \hline
+  \end{tabular}
+\end{table}
+
+As máquinas de teste do LPOO utilizam como sistema operacional o GNU/Linux na forma da
+distribuição Arch Linux e seu acesso é exclusivamente via SSH.
+
+Os seguintes softwares encontram-se instalados:
+\begin{itemize}
+  \item \lstinline+gfortran+
+  \item \lstinline+gcc+
+  \item \lstinline!g++!
+  \item \lstinline+python3+
+\end{itemize}

@@ -1,0 +1,22 @@
+Neste repositório você irá encontrar informações administrativas do LPOO.
+
+Manuais
+-------
+
+* network.tex: Possui um mapa do laboratório com informações da rede interna.
+* test-pc: Possui informações para manutenção das máquinas de teste.
+* test-environment.tex: Possui informações para o processamento de requisições
+  para uso das máquinas de teste.
+* user-pc: Possui informações para manutenção das máquinas de usuários.
+
+Para obter o pdf dos manuais::
+
+    $ make
+
+Ferramentas
+-----------
+
+* host_generator: Usada para criar o arquivo hosts.pdf a partir do /etc/hosts
+* are_online:     Usada para verificar se os hosts estão online.
+
+Os IPs procurados são apenas aqueles com 143.106.118 no começo.
