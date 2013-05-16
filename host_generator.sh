@@ -1,6 +1,8 @@
 #!/bin/bash
 tmptex=tmp.tex
 
+awk '/^143.106.118/ {print $0}' /etc/hosts > hosts.current
+
 cat > $tmptex << EOF
 \documentclass[12pt]{article}
 \usepackage[top=3cm,bottom=3cm,left=2cm,right=2cm]{geometry}
